@@ -18,6 +18,11 @@
 #include <pcl/filters/voxel_grid.h>
 
 #include <pclomp/ndt_omp.h>
+//#include <pcl/segmentation/sac_segmentation.h>
+//#include <pcl/filters/extract_indices.h>
+//#include <pcl/sample_consensus/model_types.h>
+//#include <pcl/sample_consensus/method_types.h>
+//#include <pcl/io/pcd_io.h>
 
 namespace flame1{
 class GlobalmapServerNodelet : public nodelet::Nodelet {
@@ -37,8 +42,11 @@ public:
     initialize_params();
 
     // publish globalmap with "latched" publisher
+    //floor_elimination();
+
     globalmap_pub = nh.advertise<sensor_msgs::PointCloud2>("/globalmap", 5, true);
     globalmap_pub.publish(globalmap);
+
   }
 
 private:
@@ -59,6 +67,34 @@ private:
     voxelgrid->filter(*filtered);
 
     globalmap = filtered;
+
+  }
+  void floor_elimination(){
+    std::cout<<"Loaded:"<< globalmap->width*globalmap->height<<std::endl;
+
+    pcl::PointCloud<PointT>::Ptr inlierPoints (new pcl::PointCloud<PointT>),
+                                  inlierPoints_neg (new pcl::PointCloud<PointT>);
+
+    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
+    pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
+
+    pcl::SACSegmentation<PointT> seg;
+    seg.setOptimizeCoefficients(true);
+    seg.setInputCloud(globalmap);
+    seg.setModelType(pcl::SACMODEL_PLANE);
+    seg.setMethodType (pcl::SAC_RANSAC);
+    seg.setMaxIterations(1000);
+    seg.setDistanceThreshold(0.01);
+    seg.segment(*inliers,*coefficients);
+    pcl::copyPointCloud<PointT>(*globalmap,*inliers,*inlierPoints);
+    pcl::io::savePCDFile<PointT>("/SACsegmentation_result.pcd",*inlierPoints);
+
+    pcl::ExtractIndices<PointT> extract;
+    extract.setInputCloud(globalmap);
+    extract.setIndices(inliers);
+    extract.setNegative(true);
+    extract.filter(*inlierPoints_neg);
+    pcl::io::savePCDFile<PointT>("/SACSEG_NEG.pcd",*inlierPoints_neg);
   }
 
 private:

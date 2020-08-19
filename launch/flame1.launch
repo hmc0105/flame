@@ -6,8 +6,8 @@
   <arg name="imu_topic" default="/gpsimu_driver/imu_data" />
   <arg name="odom_child_frame_id" default="os1_lidar/lidar" />
 
-  <!-- in case you use velodyne_driver, comment out the following line -->
   <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager)" args="manager" output="screen"/>
+
 
     <!-- globalmap_server_nodelet -->
     <node pkg="nodelet" type="nodelet" name="globalmap_server_nodelet" args="load flame1/GlobalmapServerNodelet $(arg nodelet_manager)">
