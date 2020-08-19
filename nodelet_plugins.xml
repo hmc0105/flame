@@ -1,0 +1,3 @@
+<library path="lib/libflame1_nodelet">
+<class name="flame1/GlobalmapServerNodelet" type="flame1::GlobalmapServerNodelet" base_class_type="nodelet::Nodelet" />
+</library>
